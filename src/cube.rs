@@ -322,7 +322,7 @@ impl Into<String> for Cube {
 
 #[cfg(test)]
 mod tests {
-    use std::hash::DefaultHasher;
+    use std::{collections::HashMap, hash::DefaultHasher};
 
     use super::*;
 
@@ -360,5 +360,45 @@ mod tests {
         let mut s = DefaultHasher::new();
         cube.hash(&mut s);
         assert_ne!(s.finish(), 1795212828290158527);
+    }
+
+    #[test]
+    fn test_hash_2() {
+        let mut visited: HashMap<Cube, bool> = HashMap::new();
+        let mut cube = Cube::new();
+        cube.rotate(2);
+
+        visited.insert(cube, true);
+
+        let mut cube2 = Cube::new();
+        cube2.rotate(2);
+
+        assert!(visited.contains_key(&cube2));
+
+        let mut cube3 = Cube::new();
+        cube3.rotate(3);
+
+        assert!(!visited.contains_key(&cube3));
+    }
+
+    #[test]
+    fn test_rotation() {
+        let mut count = [0u8; 54];
+
+        for r in ROTATION {
+            for (from, to) in r {
+                count[from] += 1;
+                count[to] += 1;
+            }
+        }
+
+        let expected = [6, 4, 6, 4, 0, 4, 6, 4, 6];
+
+        for i in 0..6 {
+            let start = (i * 9) as usize;
+            let end = start + 9;
+            let face = &count[start..end];
+            assert!(face == expected)
+        }
     }
 }

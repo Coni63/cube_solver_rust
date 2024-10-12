@@ -1,4 +1,5 @@
 mod cube;
+mod solver;
 mod utils;
 
 use cube::Cube;
@@ -8,12 +9,17 @@ fn main() {
     let mut cube_copy = cube.clone();
 
     eprintln!("{:?}", cube);
-    eprintln!("{:?}", utils::calculate_hash(&cube));
+    // eprintln!("{:?}", utils::calculate_hash(&cube));
 
-    utils::shuffle(&mut cube_copy);
+    utils::shuffle(&mut cube_copy, 2);
 
-    eprintln!("{:?}", cube_copy);
-    eprintln!("{:?}", utils::calculate_hash(&cube_copy));
+    // eprintln!("{:?}", cube_copy);
+    // eprintln!("{:?}", utils::calculate_hash(&cube_copy));
+
+    match solver::solve(&cube_copy) {
+        Ok(solution) => eprintln!("{:?}", solution),
+        Err(s) => eprintln!("{}", s),
+    }
 
     // cube.rotate(0);
     // eprintln!("{:?}", cube);
