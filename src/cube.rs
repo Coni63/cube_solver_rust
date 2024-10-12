@@ -278,3 +278,87 @@ impl Hash for Cube {
         self.facets.hash(state);
     }
 }
+
+impl From<&str> for Cube {
+    fn from(seq: &str) -> Cube {
+        // Split the string by commas and map each part to a parsed u8 value
+        let arr: Vec<u8> = seq
+            .chars()
+            .map(|x| x.to_digit(10).expect("Invalid value"))
+            .map(|x| x as u8)
+            .collect();
+
+        // Check if the number of values is exactly 54
+        if arr.len() != 54 {
+            panic!(
+                "Cannot convert the given string to a cube. It requires 54 values, but found {}",
+                arr.len()
+            );
+        }
+
+        // Check if any value is outside the allowed range [0, 5]
+        if arr.iter().any(|&x| x > 5) {
+            panic!("Some values are not accepted as colors. Each value must be between 0 and 5.");
+        }
+
+        // Convert the Vec<u8> into an array [u8; 54]
+        let facets: [u8; 54] = arr
+            .try_into()
+            .expect("Conversion to fixed-size array failed");
+
+        Cube { facets }
+    }
+}
+
+impl Into<String> for Cube {
+    fn into(self) -> String {
+        self.facets
+            .iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<String>>()
+            .join("")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::hash::DefaultHasher;
+
+    use super::*;
+
+    #[test]
+    fn test_into() {
+        let cube = Cube::new();
+
+        let s: String = cube.into();
+
+        assert_eq!(
+            s,
+            String::from("000000000111111111222222222333333333444444444555555555")
+        );
+    }
+
+    #[test]
+    fn test_from() {
+        let s = String::from("000555000111111111222222222333333333444444444555000555");
+        let cube = Cube::from(s.as_str());
+
+        assert_eq!(cube.facets[4], 5u8);
+        assert_eq!(cube.facets[48], 0u8);
+    }
+
+    #[test]
+    fn test_hash() {
+        let mut cube = Cube::new();
+
+        let mut s = DefaultHasher::new();
+        cube.hash(&mut s);
+        assert_eq!(s.finish(), 1795212828290158527);
+
+        cube.rotate(2);
+
+        let mut s = DefaultHasher::new();
+        cube.hash(&mut s);
+        assert_ne!(s.finish(), 1795212828290158527);
+    }
+}
