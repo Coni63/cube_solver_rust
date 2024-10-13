@@ -2,16 +2,23 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::cube::Cube;
 
-pub fn solve(cube: &Cube) -> Result<Vec<u8>, String> {
+pub fn solve(cube: &Cube) -> Vec<u8> {
     let cube1 = cube.clone();
     let cube2 = Cube::new();
-    let max_depth = 15;
-    meet_in_middle(cube1, cube2, max_depth)
+    meet_in_middle(cube1, cube2)
 }
 
-fn meet_in_middle(right_cube: Cube, left_cube: Cube, max_depth: usize) -> Result<Vec<u8>, String> {
+fn invert_action(action: u8) -> u8 {
+    if action % 2 == 1 {
+        action - 1
+    } else {
+        action + 1
+    }
+}
+
+fn meet_in_middle(left_cube: Cube, right_cube: Cube) -> Vec<u8> {
     if right_cube == left_cube {
-        return Ok(vec![]);
+        return vec![];
     }
 
     let mut visited_left: HashMap<Cube, Vec<u8>> = HashMap::new();
@@ -26,51 +33,49 @@ fn meet_in_middle(right_cube: Cube, left_cube: Cube, max_depth: usize) -> Result
     let mut queue_right: VecDeque<Cube> = VecDeque::new();
     queue_right.push_back(right_cube);
 
-    for _ in 0..max_depth {
+    loop {
         if let Some(cube) = queue_left.pop_front() {
-            let mut left_action = visited_left.get(&cube).unwrap().clone();
+            let left_action_start = visited_left.get(&cube).unwrap().clone();
             for action in 0..12 {
                 let mut copy = cube.clone();
                 copy.rotate(action);
 
+                let mut left_action = left_action_start.clone();
+                left_action.push(action);
+
                 if visited_right.contains_key(&copy) {
-                    let right_action = visited_right.get(&cube).unwrap().to_owned();
-                    left_action.extend(right_action.iter().rev());
-                    return Ok(left_action);
+                    let right_action = visited_right.get(&copy).unwrap().to_owned();
+                    left_action.extend(right_action.iter().rev().map(|&x| invert_action(x)));
+                    return left_action;
                 }
 
                 if !visited_left.contains_key(&copy) {
-                    let mut total_actions = left_action.clone();
-                    total_actions.push(action);
-                    visited_left.insert(copy.clone(), total_actions);
+                    visited_left.insert(copy.clone(), left_action);
                     queue_left.push_back(copy);
                 }
             }
         }
 
         if let Some(cube) = queue_right.pop_front() {
-            let right_action = visited_right.get(&cube).unwrap().clone();
+            let right_action_start = visited_right.get(&cube).unwrap().clone();
             for action in 0..12 {
                 let mut copy = cube.clone();
                 copy.rotate(action);
 
+                let mut right_action = right_action_start.clone();
+                right_action.push(action);
+
                 if visited_left.contains_key(&copy) {
-                    let mut left_action = visited_left.get(&cube).unwrap().to_owned();
-                    left_action.extend(right_action.iter().rev());
-                    return Ok(left_action);
+                    let mut left_action = visited_left.get(&copy).unwrap().to_owned();
+                    left_action.extend(right_action.iter().rev().map(|&x| invert_action(x)));
+                    return left_action;
                 }
 
                 if !visited_right.contains_key(&copy) {
-                    let mut total_actions = right_action.clone();
-                    total_actions.push(action);
-                    visited_right.insert(copy.clone(), total_actions);
+                    visited_right.insert(copy.clone(), right_action);
                     queue_right.push_back(copy);
                 }
             }
         }
-
-        // eprintln!("{:?} & {:?}", queue_left.len(), queue_right.len());
     }
-
-    Err(format!("Solution not found in {} moves", max_depth * 2))
 }
