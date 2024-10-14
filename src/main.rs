@@ -10,7 +10,7 @@ fn main() {
     let cube = Cube::new();
     let mut cube_copy = cube.clone();
 
-    utils::shuffle(&mut cube_copy, 50);
+    utils::shuffle(&mut cube_copy, 16);
 
     let timer = Instant::now();
     let solution = solver::solve(&cube_copy);
